@@ -182,8 +182,21 @@ def main():
 	if not os.path.isfile(args.face):
 		raise ValueError('--face argument must be a valid path to video/image file')
 
-	elif args.face.split('.')[1] in ['jpg', 'png', 'jpeg']:
-		full_frames = [cv2.imread(args.face)]
+	elif args.face.lower().endswith(('.jpg', '.png', '.jpeg')):
+		# Handle unicode paths on Windows using numpy and imdecode
+		try:
+			# Read file as byte stream
+			stream = np.fromfile(args.face, dtype=np.uint8)
+			# Decode image
+			frame = cv2.imdecode(stream, cv2.IMREAD_COLOR)
+			if frame is None:
+				raise ValueError(f"Failed to decode image from {args.face}")
+			full_frames = [frame]
+		except Exception as e:
+			print(f"Error reading image: {e}")
+			# Fallback
+			full_frames = [cv2.imread(args.face)]
+			
 		fps = args.fps
 
 	else:
